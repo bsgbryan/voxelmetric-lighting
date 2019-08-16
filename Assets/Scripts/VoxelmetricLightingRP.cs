@@ -23,11 +23,18 @@ public class VoxelmetricLightingRP : RenderPipeline {
 
     renderContext.SetupCameraProperties(cameras[0]);
 
+    var drawSettings = new DrawingSettings(
+      new ShaderTagId("SRPDefaultUnlit"),
+      new SortingSettings()
+    );
+
+		var filterSettings = FilteringSettings.defaultValue;
+
+    filterSettings.renderQueueRange = RenderQueueRange.opaque;
+
     commandBuffer.ClearRenderTarget(true, false, Color.clear);
 
-    renderContext.ExecuteCommandBuffer(commandBuffer);
-
-    commandBuffer.Clear();
+    renderContext.DrawRenderers(cullingResults, ref drawSettings, ref filterSettings);
 
     renderContext.Submit();
   }
