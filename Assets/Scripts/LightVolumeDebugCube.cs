@@ -8,7 +8,7 @@ public class LightVolumeDebugCube : MonoBehaviour {
 
     container.name = "Voxel Light Debugger";
 
-    container.transform.position   = new Vector3( 0, 0.5f, 0 );
+    container.transform.position   = new Vector3( 0, 0.5f,  0);
     container.transform.localScale = new Vector3(10, 1,    10);
 
     for (int x = -5; x < 5; x++)
