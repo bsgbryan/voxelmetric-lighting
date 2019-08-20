@@ -1,18 +1,42 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+
+using UnityEngine;
+
+using UnityEditor;
 
 [ExecuteInEditMode]
 public class LightVolumeDebugCube : MonoBehaviour {
 
+  public Vector3 Dimensions = new Vector3(10, 1, 10);
+
+  public List<GameObject> ShadowVoxels = new List<GameObject>();
+
+  private GameObject Container;
+  
   void Start() {
-    GameObject container = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
-    container.name = "Voxel Light Debugger";
+  }
 
-    container.transform.position   = new Vector3( 0, 0.5f,  0);
-    container.transform.localScale = new Vector3(10, 1,    10);
+  void Update() {
+      
+  }
 
-    for (int x = -5; x < 5; x++)
-      for (int z = -5; z < 5; z++) {
+  public  void CreateDebugVoxels() {
+    Container = GameObject.CreatePrimitive(PrimitiveType.Cube);
+
+    Container.name = "Voxel Light Debugger";
+
+    Container.transform.position   = new Vector3(0, 0.5f, 0);
+    Container.transform.localScale = new Vector3(Dimensions.x, Dimensions.y, Dimensions.z);
+
+    int endX   = (int) (Dimensions.x * 0.5f);
+    int endZ   = (int) (Dimensions.z * 0.5f);
+    
+    int startX = -endX;
+    int startZ = -endZ;
+
+    for (int x = startX; x < endX; x++)
+      for (int z = startZ; z < endZ; z++) {
         GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
         
         cube.name               = $"{x}:{z}";
@@ -24,11 +48,15 @@ public class LightVolumeDebugCube : MonoBehaviour {
         
         cube.gameObject.SetActive(false);
 
-        cube.transform.parent = container.transform;
+        cube.transform.parent = Container.transform;
+
+        ShadowVoxels.Add(cube);
       }
   }
 
-  void Update() {
-      
+  public void DestroyDebugVoxels() {
+    GameObject.DestroyImmediate(Container);
+
+    ShadowVoxels.Clear();
   }
 }
