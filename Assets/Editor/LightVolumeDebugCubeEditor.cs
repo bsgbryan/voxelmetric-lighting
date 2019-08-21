@@ -8,6 +8,9 @@ public class LightVolumeDebugCubeEditor : Editor {
     DrawDefaultInspector();
 
     LightVolumeDebugCube debugCube = (LightVolumeDebugCube) target;
+
+    if(GUILayout.Button("Cast Shadows"))
+      debugCube.CastShadows();
     
     if(GUILayout.Button("Create Debug Voxels") && debugCube.ShadowVoxels.Count == 0)
       debugCube.CreateDebugVoxels();
