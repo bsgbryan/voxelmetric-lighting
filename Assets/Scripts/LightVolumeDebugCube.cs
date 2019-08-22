@@ -23,7 +23,7 @@ public class LightVolumeDebugCube : MonoBehaviour {
   public void CastShadows() {
     LayerMask mask = Invert ? ~Mask.value : Mask.value;
 
-    Vector3 direction = transform.rotation * Vector3.forward;
+    Vector3 direction = transform.rotation * Vector3.back;
     
     foreach (var shadowVoxel in ShadowVoxels) {
       Vector3 worldPosition = Container.transform.position + shadowVoxel.transform.position;
@@ -40,16 +40,20 @@ public class LightVolumeDebugCube : MonoBehaviour {
   public  void CreateDebugVoxels() {
     Container = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
-    Container.name = "Voxel Light Debugger";
+    Container.name  = "Voxel Light Debugger";
+    Container.layer = LayerMask.NameToLayer("Ignore Raycast");
 
-    Container.transform.position   = Vector3.zero;
-    Container.transform.localScale = new Vector3(Dimensions.x, Dimensions.y, Dimensions.z);
+    Container.transform.position = Vector3.zero;
+
+    Container.
+      GetComponentInChildren<MeshRenderer>().
+      enabled = false;
 
     float scale = 1f / (float) Resolution;
 
-    float endX = Dimensions.x * scale;
-    float endY = Dimensions.y * scale;
-    float endZ = Dimensions.z * scale;
+    float endX = Dimensions.x * .5f;
+    float endY = Dimensions.y * .5f;
+    float endZ = Dimensions.z * .5f;
     
     float startX = -endX;
     float startY = -endY;
@@ -69,15 +73,10 @@ public class LightVolumeDebugCube : MonoBehaviour {
           cube.transform.localScale = new Vector3(scale, scale, scale);
           
           cube.
-            GetComponent<MeshRenderer>().
-            material = new Material(Shader.Find("Voxelmetric Lighting/Debug"));
-          
-          cube.
-            gameObject.
             GetComponentInChildren<MeshRenderer>().
             enabled = false;
           
-          cube.gameObject.layer = LayerMask.NameToLayer("Ignore Raycast");
+          cube.layer = LayerMask.NameToLayer("Ignore Raycast");
 
           ShadowVoxels.Add(cube);
         }
