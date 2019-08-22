@@ -11,16 +11,5 @@ public class LightVolumeDebugCubeEditor : Editor {
 
     if(GUILayout.Button("Cast Shadows"))
       debugCube.CastShadows();
-    
-    if(GUILayout.Button("Create Debug Voxels") && debugCube.ShadowVoxels.Count == 0)
-      debugCube.CreateDebugVoxels();
-
-    if(GUILayout.Button("Destroy Debug Voxels"))
-      debugCube.DestroyDebugVoxels();
-
-    if(GUILayout.Button("Refresh Debug Voxels")) {
-      debugCube.DestroyDebugVoxels();
-      debugCube.CreateDebugVoxels();
-    }
   }
 }

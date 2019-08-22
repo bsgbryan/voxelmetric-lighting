@@ -18,26 +18,11 @@ public class LightVolumeDebugCube : MonoBehaviour {
 
   private GameObject Container;
 
-  void Update() => CastShadows();
+  // void Update() => CastShadows();
 
   public void CastShadows() {
-    LayerMask mask = Invert ? ~Mask.value : Mask.value;
+    DestroyDebugVoxels();
 
-    Vector3 direction = transform.rotation * Vector3.back;
-    
-    foreach (var shadowVoxel in ShadowVoxels) {
-      Vector3 worldPosition = Container.transform.position + shadowVoxel.transform.position;
-      
-      bool hitSomething = Physics.Raycast(worldPosition, direction, 10f, mask);
-      
-      shadowVoxel.
-        gameObject.
-        GetComponentInChildren<MeshRenderer>().
-        enabled = hitSomething;
-    }
-  }
-
-  public  void CreateDebugVoxels() {
     Container = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
     Container.name  = "Voxel Light Debugger";
@@ -61,24 +46,29 @@ public class LightVolumeDebugCube : MonoBehaviour {
 
     float offset = scale * 0.5f;
 
+    LayerMask mask = Invert ? ~Mask.value : Mask.value;
+
     for (float y = startY; y < endY; y += scale) {
       for (float x = startX; x < endX; x += scale) {
         for (float z = startZ; z < endZ; z += scale) {
-          GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+          Vector3 localPosition = new Vector3(x + offset, y + offset, z + offset);
+          Vector3 worldPosition = Container.transform.position + localPosition;
+          Vector3 direction     = transform.rotation * Vector3.back;
 
-          cube.transform.parent = Container.transform;
-          
-          cube.name                 = $"{x}:{y}:{z}";
-          cube.transform.position   = new Vector3(x + offset, y + offset, z + offset);
-          cube.transform.localScale = new Vector3(scale, scale, scale);
-          
-          cube.
-            GetComponentInChildren<MeshRenderer>().
-            enabled = false;
-          
-          cube.layer = LayerMask.NameToLayer("Ignore Raycast");
+          bool hitSomething = Physics.Raycast(worldPosition, direction, 10f, mask);
 
-          ShadowVoxels.Add(cube);
+          if (hitSomething) {
+            GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+
+            cube.name  = $"{x}:{y}:{z}";
+            cube.layer = LayerMask.NameToLayer("Ignore Raycast");
+
+            cube.transform.parent     = Container.transform;
+            cube.transform.position   = localPosition;
+            cube.transform.localScale = new Vector3(scale, scale, scale);
+
+            ShadowVoxels.Add(cube);
+          }
         }
       }
     }
