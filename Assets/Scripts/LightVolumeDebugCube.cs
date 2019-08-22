@@ -68,8 +68,8 @@ public class LightVolumeDebugCube : MonoBehaviour {
 
           cube.transform.parent = Container.transform;
           
-          cube.name               = $"{x}:{y}:{z}";
-          cube.transform.position = new Vector3(x, y, z);
+          cube.name                 = $"{x}:{y}:{z}";
+          cube.transform.position   = new Vector3(x + offset, y + offset, z + offset);
           cube.transform.localScale = new Vector3(scale, scale, scale);
           
           cube.
