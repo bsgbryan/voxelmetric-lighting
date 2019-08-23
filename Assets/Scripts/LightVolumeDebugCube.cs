@@ -18,9 +18,9 @@ public class LightVolumeDebugCube : MonoBehaviour {
 
   private GameObject Container;
 
-  // void Update() => CastShadows();
+  void Update() => CastShadows();
 
-  public void CastShadows() {
+  public void RefreshDebugVoxels() {
     DestroyDebugVoxels();
 
     Container = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -33,7 +33,9 @@ public class LightVolumeDebugCube : MonoBehaviour {
     Container.
       GetComponentInChildren<MeshRenderer>().
       enabled = false;
+  }
 
+  public void CastShadows() {
     float scale = 1f / (float) Resolution;
 
     float endX = Dimensions.x * .5f;
@@ -48,28 +50,45 @@ public class LightVolumeDebugCube : MonoBehaviour {
 
     LayerMask mask = Invert ? ~Mask.value : Mask.value;
 
+    int index = 0;
+
+    Vector3 direction = transform.rotation * Vector3.back;
+
     for (float y = startY; y < endY; y += scale)
       for (float x = startX; x < endX; x += scale)
         for (float z = startZ; z < endZ; z += scale) {
           Vector3 localPosition = new Vector3(x + offset, y + offset, z + offset);
           Vector3 worldPosition = Container.transform.position + localPosition;
-          Vector3 direction     = transform.rotation * Vector3.back;
 
           bool hitSomething = Physics.Raycast(worldPosition, direction, 10f, mask);
 
           if (hitSomething) {
-            GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            GameObject cube;
 
-            cube.name  = $"{x}:{y}:{z}";
-            cube.layer = LayerMask.NameToLayer("Ignore Raycast");
+            if (index == ShadowVoxels.Count) {
+              cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+              
+              cube.layer = LayerMask.NameToLayer("Ignore Raycast");
 
-            cube.transform.parent     = Container.transform;
-            cube.transform.position   = localPosition;
-            cube.transform.localScale = new Vector3(scale, scale, scale);
+              cube.transform.parent     = Container.transform;
+              cube.transform.localScale = new Vector3(scale, scale, scale);
+              
+              ShadowVoxels.Add(cube);
+            } else
+              cube = ShadowVoxels[index];
 
-            ShadowVoxels.Add(cube);
+            cube.name               = $"{x}:{y}:{z}";
+            cube.transform.position = localPosition;
+
+            index++;
           }
         }
+    
+    for(; index < ShadowVoxels.Count; index++) {
+      DestroyImmediate(ShadowVoxels[index]);
+
+      ShadowVoxels.RemoveAt(index);
+    }
   }
 
   public void DestroyDebugVoxels() {
