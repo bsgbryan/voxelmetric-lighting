@@ -48,8 +48,8 @@ public class LightVolumeDebugCube : MonoBehaviour {
 
     LayerMask mask = Invert ? ~Mask.value : Mask.value;
 
-    for (float y = startY; y < endY; y += scale) {
-      for (float x = startX; x < endX; x += scale) {
+    for (float y = startY; y < endY; y += scale)
+      for (float x = startX; x < endX; x += scale)
         for (float z = startZ; z < endZ; z += scale) {
           Vector3 localPosition = new Vector3(x + offset, y + offset, z + offset);
           Vector3 worldPosition = Container.transform.position + localPosition;
@@ -70,8 +70,6 @@ public class LightVolumeDebugCube : MonoBehaviour {
             ShadowVoxels.Add(cube);
           }
         }
-      }
-    }
   }
 
   public void DestroyDebugVoxels() {
