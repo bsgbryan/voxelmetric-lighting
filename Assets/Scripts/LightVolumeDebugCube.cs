@@ -21,7 +21,9 @@ public class LightVolumeDebugCube : MonoBehaviour {
   void Update() => CastShadows();
 
   public void RefreshDebugVoxels() {
-    DestroyDebugVoxels();
+    GameObject.DestroyImmediate(Container);
+
+    ShadowVoxels.Clear();
 
     Container = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
@@ -67,12 +69,12 @@ public class LightVolumeDebugCube : MonoBehaviour {
 
             if (index == ShadowVoxels.Count) {
               cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-              
+
               cube.layer = LayerMask.NameToLayer("Ignore Raycast");
 
               cube.transform.parent     = Container.transform;
               cube.transform.localScale = new Vector3(scale, scale, scale);
-              
+
               ShadowVoxels.Add(cube);
             } else
               cube = ShadowVoxels[index];
@@ -83,17 +85,11 @@ public class LightVolumeDebugCube : MonoBehaviour {
             index++;
           }
         }
-    
+
     for(; index < ShadowVoxels.Count; index++) {
       DestroyImmediate(ShadowVoxels[index]);
 
       ShadowVoxels.RemoveAt(index);
     }
-  }
-
-  public void DestroyDebugVoxels() {
-    GameObject.DestroyImmediate(Container);
-
-    ShadowVoxels.Clear();
   }
 }
