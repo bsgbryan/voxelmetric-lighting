@@ -5,6 +5,9 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class LightVolumeDebugCube : MonoBehaviour {
 
+  public float RayLifespan = 3f;
+  public float ShadowLength = 10f;
+
   public LayerMask Mask;
   
   public bool Invert = true;
@@ -12,84 +15,77 @@ public class LightVolumeDebugCube : MonoBehaviour {
   [Range(1, 10)]
   public int Resolution = 1;
 
-  public Vector3 Dimensions = new Vector3(10, 10, 10);
+  public GameObject ShadowCaster;
 
-  public List<GameObject> ShadowVoxels = new List<GameObject>();
-
-  private GameObject Container;
-
-  void Update() => CastShadows();
-
-  public void RefreshDebugVoxels() {
-    GameObject.DestroyImmediate(Container);
-
-    ShadowVoxels.Clear();
-
-    Container = GameObject.CreatePrimitive(PrimitiveType.Cube);
-
-    Container.name  = "Voxel Light Debugger";
-    Container.layer = LayerMask.NameToLayer("Ignore Raycast");
-
-    Container.transform.position = Vector3.zero;
-
-    Container.
-      GetComponentInChildren<MeshRenderer>().
-      enabled = false;
-  }
+  private void Update() => CastShadows();
 
   public void CastShadows() {
     float scale = 1f / (float) Resolution;
 
-    float endX = Dimensions.x * .5f;
-    float endY = Dimensions.y * .5f;
-    float endZ = Dimensions.z * .5f;
-    
-    float startX = -endX;
-    float startY = -endY;
-    float startZ = -endZ;
-
-    float offset = scale * 0.5f;
-
     LayerMask mask = Invert ? ~Mask.value : Mask.value;
 
-    int index = 0;
+    Vector3 shadowDirection = transform.TransformDirection(Vector3.forward);
+    Vector3 drawPoint       = shadowDirection * ShadowLength;
 
-    Vector3 direction = transform.rotation * Vector3.back;
+    Debug.DrawRay(ShadowCaster.transform.position, drawPoint, Color.white, RayLifespan);
 
-    for (float y = startY; y < endY; y += scale)
-      for (float x = startX; x < endX; x += scale)
-        for (float z = startZ; z < endZ; z += scale) {
-          Vector3 localPosition = new Vector3(x + offset, y + offset, z + offset);
-          Vector3 worldPosition = Container.transform.position + localPosition;
+    var ray = new Ray(ShadowCaster.transform.position, drawPoint);
+    var p   = ray.GetPoint(ShadowLength);
 
-          bool hitSomething = Physics.Raycast(worldPosition, direction, 10f, mask);
+    bool hasShadow = true;
+    int  passes    = 0;
 
-          if (hitSomething) {
-            GameObject cube;
+    var rot = transform.rotation;
 
-            if (index == ShadowVoxels.Count) {
-              cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+    while (hasShadow) {
+      hasShadow = false;
 
-              cube.layer = LayerMask.NameToLayer("Ignore Raycast");
+      passes++;
+      
+      for (int side = 0; side < 4; side++) {
+        bool processingXAxis =  side % 2 == 0;
+        bool processingYAxis = !processingXAxis;
+        
+        bool processingPositive = false;
+        bool processingNegative = false;
 
-              cube.transform.parent     = Container.transform;
-              cube.transform.localScale = new Vector3(scale, scale, scale);
-
-              ShadowVoxels.Add(cube);
-            } else
-              cube = ShadowVoxels[index];
-
-            cube.name               = $"{x}:{y}:{z}";
-            cube.transform.position = localPosition;
-
-            index++;
-          }
+        if (processingXAxis) {
+          processingPositive =  side == 0;
+          processingNegative = !processingPositive;
+        }
+        
+        if (processingYAxis) {
+          processingPositive =  side == 1;
+          processingNegative = !processingPositive;
         }
 
-    for(; index < ShadowVoxels.Count; index++) {
-      DestroyImmediate(ShadowVoxels[index]);
+        int totalStepsThisPass = passes;
 
-      ShadowVoxels.RemoveAt(index);
+        int start = -totalStepsThisPass;
+        
+        for (int step = start; step < totalStepsThisPass; step++) {
+          int x = 0;
+          int y = 0;
+
+          if (processingXAxis) {
+            x = processingNegative ? -passes : passes;
+            y = step;
+          } else {
+            y = processingNegative ? -passes : passes;
+            x = step;
+          }
+
+          Vector3 position  = p + transform.rotation * new Vector3(x * scale, y * scale, 0f);
+          Vector3 direction = transform.TransformDirection(Vector3.back);
+
+          bool hitSomething = Physics.Raycast(position, direction, ShadowLength * 1.25f, mask);
+
+          Debug.DrawRay(position, direction * ShadowLength * 1.25f, hitSomething ? Color.red : Color.blue, RayLifespan);
+
+          if (hitSomething && !hasShadow)
+            hasShadow = true;
+        }
+      }
     }
   }
 }
