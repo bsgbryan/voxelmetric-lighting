@@ -58,5 +58,6 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
-# VSCode workspace meta data
+# VSCode meta data
 *.code-workspace
+.vscode
