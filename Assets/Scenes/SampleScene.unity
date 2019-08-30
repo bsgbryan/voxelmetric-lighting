@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.18367249, g: 0.22800091, b: 0.29847708, a: 1}
+  m_IndirectSpecularColor: {r: 0.18326624, g: 0.2269685, b: 0.29508823, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -196,7 +196,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 4.5872e-41, y: 4.2799702e-32, z: 1e-45, w: 4.279989e-32}
+  m_BoundingSphereOverride: {x: 1.35e-43, y: 8.985e-42, z: 1e-45, w: 0.0000017502434}
   m_UseBoundingSphereOverride: 0
   m_ShadowRadius: 0
   m_ShadowAngle: 0
@@ -207,13 +207,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705507993}
-  m_LocalRotation: {x: 0.60562706, y: -0.5465781, z: -0.20701562, w: 0.54001194}
+  m_LocalRotation: {x: 0.10663249, y: -0.5492814, z: 0.19973178, w: 0.80437976}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 385.327, y: -471.48602, z: -78.467}
+  m_LocalEulerAnglesHint: {x: 383.014, y: -426.036, z: 12.817}
 --- !u!114 &705507996
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -228,18 +228,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShadowCaster: {fileID: 1151918355}
   Resolution: 10
-  ShadowLength: 10.43
-  RayAugment: 1.207
+  ShadowLength: 10
+  RayAugment: 1.161
+  MaxPasses: 32
   Name:
     serializedVersion: 2
     m_Bits: 4
   Ignore: 1
+  DrawInitialRay: 0
   InitialRayColor: {r: 1, g: 1, b: 1, a: 1}
+  DrawHitRays: 0
+  HitAlpha: 1
+  DrawMissRays: 0
+  MissAlpha: 0.25
+  DrawBoundingRays: 1
+  BoundingRayColor: {r: 0, g: 0, b: 0, a: 0.50980395}
   Red: 0.5
   Green: 0.5
   Blue: 0.5
-  HitAlpha: 1
-  MissAlpha: 0.25
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -409,10 +415,10 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1151918355}
-  m_LocalRotation: {x: -0.17178759, y: 0.54283345, z: -0.09120574, w: 0.81700826}
-  m_LocalPosition: {x: 0.38, y: 0.67, z: 0.24}
+  m_LocalRotation: {x: -0.6652834, y: -0.28525615, z: -0.32905298, w: -0.606425}
+  m_LocalPosition: {x: 3.85, y: 4.51, z: -4.56}
   m_LocalScale: {x: 3.0698, y: 3.0698, z: 3.0698}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: -10.468, y: 69.048004, z: -19.951}
+  m_LocalEulerAnglesHint: {x: 38.255, y: -266.5, z: 97.44501}
