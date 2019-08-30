@@ -32,8 +32,8 @@ public class LightVolumeDebugCube : MonoBehaviour {
   private void Update() => CastShadows();
 
   public void CastShadows() {
-    var ShadowPoints  = new Vector3[MaxPasses * 2 * 4];
-    var ShadowLengths = new float[MaxPasses * 2 * 4];
+    var shadowPoints  = new Vector3[MaxPasses * 2 * 4];
+    var shadowLengths = new float[MaxPasses * 2 * 4];
 
     float scale = 1f / (float) Resolution;
 
@@ -102,8 +102,8 @@ public class LightVolumeDebugCube : MonoBehaviour {
 
             int index = (MaxPasses * 2) * side + MaxPasses + step;
 
-            ShadowPoints[index] = position;
-            ShadowLengths[index]  = hitInfo.distance;
+            shadowPoints[index] = position;
+            shadowLengths[index]  = hitInfo.distance;
 
             if (DrawHitRays)
               Debug.DrawRay(position, direction * ShadowLength * RayAugment, new Color(r, g, b, HitAlpha));
@@ -111,6 +111,12 @@ public class LightVolumeDebugCube : MonoBehaviour {
             Debug.DrawRay(position, direction * ShadowLength * RayAugment, new Color(r, g, b, MissAlpha));
         }
       }
+    }
+
+    var shadowVertices  = new Vector3[shadowPoints.Length * 2];
+    var shadowTriangles = new int[shadowPoints.Length * 3];
+
+    for (int side = 0; side < 4; side++) {
     }
 
     // if (ShadowVolumeCapture) {
@@ -121,8 +127,8 @@ public class LightVolumeDebugCube : MonoBehaviour {
     // }
 
     if (DrawBoundingRays)
-      for(int i = 0; i < ShadowPoints.Length; i++)
-        if (ShadowPoints[i] != Vector3.zero)
-          Debug.DrawRay(ShadowPoints[i], transform.TransformDirection(Vector3.back) * ShadowLengths[i], BoundingRayColor);
+      for(int i = 0; i < shadowPoints.Length; i++)
+        if (shadowPoints[i] != Vector3.zero)
+          Debug.DrawRay(shadowPoints[i], transform.TransformDirection(Vector3.back) * shadowLengths[i], BoundingRayColor);
   }
 }
