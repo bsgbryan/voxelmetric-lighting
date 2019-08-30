@@ -17,21 +17,23 @@ public class LightVolumeDebugCube : MonoBehaviour {
   public bool Ignore = true;
   
   [Header("Debug")]
-  public bool DrawAllRays = true;
-  public bool DrawBoundingRays = true;
-  public bool ShadowVolumeCapture = true;
+  public bool DrawInitialRay = true;
   public Color InitialRayColor = Color.white;
+  public bool DrawHitRays = true;
+  [Range(.5f, 1f)] public float HitAlpha = .75f;
+  public bool DrawMissRays = false;
+  [Range(0f, .5f)] public float MissAlpha = .25f;
+  public bool DrawBoundingRays = true;
   public Color BoundingRayColor = Color.black;
   [Range(.25f, 1f)] public float Red = .5f;
   [Range(.25f, 1f)] public float Green = .5f;
   [Range(.25f, 1f)] public float Blue = .5f;
-  [Range(.5f, 1f)] public float HitAlpha = .75f;
-  [Range(0f, .5f)] public float MissAlpha = .25f;
 
   private void Update() => CastShadows();
 
   public void CastShadows() {
-    var ShadowVertices = new Vector3[MaxPasses * 2 * 4];
+    var ShadowPoints  = new Vector3[MaxPasses * 2 * 4];
+    var ShadowLengths = new float[MaxPasses * 2 * 4];
 
     float scale = 1f / (float) Resolution;
 
@@ -40,7 +42,7 @@ public class LightVolumeDebugCube : MonoBehaviour {
     Vector3 shadowDirection = transform.TransformDirection(Vector3.forward);
     Vector3 drawPoint       = shadowDirection * ShadowLength * RayAugment;
 
-    if (DrawAllRays)
+    if (DrawInitialRay)
       Debug.DrawRay(ShadowCaster.transform.position, drawPoint, InitialRayColor);
 
     var ray = new Ray(ShadowCaster.transform.position, drawPoint);
@@ -91,33 +93,36 @@ public class LightVolumeDebugCube : MonoBehaviour {
           Vector3 position  = p + transform.rotation * new Vector3(x * scale, y * scale, 0f);
           Vector3 direction = transform.TransformDirection(Vector3.back);
 
-          bool hitSomething = Physics.Raycast(position, direction, ShadowLength * RayAugment, mask);
+          RaycastHit hitInfo;
 
-          if (DrawAllRays)
-            Debug.DrawRay(position, direction * ShadowLength * RayAugment, new Color(r, g, b, hitSomething ? HitAlpha : MissAlpha));
+          bool hitSomething = Physics.Raycast(position, direction, out hitInfo, ShadowLength * RayAugment, mask);
 
           if (hitSomething) {
             hasShadow = true;
 
             int index = (MaxPasses * 2) * side + MaxPasses + step;
 
-            ShadowVertices[index] = position;
-          }
+            ShadowPoints[index] = position;
+            ShadowLengths[index]  = hitInfo.distance;
+
+            if (DrawHitRays)
+              Debug.DrawRay(position, direction * ShadowLength * RayAugment, new Color(r, g, b, HitAlpha));
+          } else if (DrawMissRays)
+            Debug.DrawRay(position, direction * ShadowLength * RayAugment, new Color(r, g, b, MissAlpha));
         }
       }
     }
 
-    if (ShadowVolumeCapture) {
-      if (passes <= MaxPasses)
-        Debug.Log($"Full shadow volume captured in {passes} passes");
-      else
-        Debug.LogWarning($"{MaxPasses} passes did not capture full shadow volume");
-    }
+    // if (ShadowVolumeCapture) {
+    //   if (passes <= MaxPasses)
+    //     Debug.Log($"Full shadow volume captured in {passes} passes");
+    //   else
+    //     Debug.LogWarning($"{MaxPasses} passes did not capture full shadow volume");
+    // }
 
     if (DrawBoundingRays)
-      for(int i = 0; i < ShadowVertices.Length; i++) {
-        if (ShadowVertices[i] != Vector3.zero)
-          Debug.DrawRay(ShadowVertices[i], transform.TransformDirection(Vector3.back) * ShadowLength * RayAugment, BoundingRayColor);
-      }
+      for(int i = 0; i < ShadowPoints.Length; i++)
+        if (ShadowPoints[i] != Vector3.zero)
+          Debug.DrawRay(ShadowPoints[i], transform.TransformDirection(Vector3.back) * ShadowLengths[i], BoundingRayColor);
   }
 }
