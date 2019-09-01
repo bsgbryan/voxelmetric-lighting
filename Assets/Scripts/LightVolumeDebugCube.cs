@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
+using System.Collections.Generic;
 
 using UnityEngine;
 
@@ -29,11 +30,21 @@ public class LightVolumeDebugCube : MonoBehaviour {
   [Range(.25f, 1f)] public float Green = .5f;
   [Range(.25f, 1f)] public float Blue = .5f;
 
+  private GameObject ShadowVolume;
+
+  [HideInInspector] public Vector3[] ShadowVertices;
+  [HideInInspector] public int[] ShadowTriangles;
+  [HideInInspector] public int BoundingRayCount = 0;
+  [HideInInspector] public int Hits = 0;
+  [HideInInspector] public int Misses = 0;
+  [HideInInspector] public int PassesExecuted = 0;
+  [HideInInspector] public int UnneededPasses = 0;
+
   private void Update() => CastShadows();
 
   public void CastShadows() {
-    var shadowPoints  = new Vector3[MaxPasses * 2 * 4];
-    var shadowLengths = new float[MaxPasses * 2 * 4];
+    var shadowPoints  = new Dictionary<int, Vector3>();
+    var shadowLengths = new Dictionary<int, float>();
 
     float scale = 1f / (float) Resolution;
 
@@ -51,7 +62,9 @@ public class LightVolumeDebugCube : MonoBehaviour {
     bool hasShadow = true;
     int  passes    = 0;
 
-    var rot = transform.rotation;
+    Hits           = 0;
+    Misses         = 0;
+    PassesExecuted = 0;
 
     while (hasShadow && passes++ < MaxPasses) {
       hasShadow = false;
@@ -102,33 +115,94 @@ public class LightVolumeDebugCube : MonoBehaviour {
 
             int index = (MaxPasses * 2) * side + MaxPasses + step;
 
-            shadowPoints[index] = position;
-            shadowLengths[index]  = hitInfo.distance;
+            shadowPoints[index]  = position;
+            shadowLengths[index] = hitInfo.distance;
 
             if (DrawHitRays)
               Debug.DrawRay(position, direction * ShadowLength * RayAugment, new Color(r, g, b, HitAlpha));
-          } else if (DrawMissRays)
-            Debug.DrawRay(position, direction * ShadowLength * RayAugment, new Color(r, g, b, MissAlpha));
+
+            Hits++;
+          } else {
+            if (DrawMissRays)
+              Debug.DrawRay(position, direction * ShadowLength * RayAugment, new Color(r, g, b, MissAlpha));
+
+            Misses++;
+          }
         }
       }
     }
 
-    var shadowVertices  = new Vector3[shadowPoints.Length * 2];
-    var shadowTriangles = new int[shadowPoints.Length * 3];
+    var pointKeys = shadowPoints.Keys.ToList();
 
-    for (int side = 0; side < 4; side++) {
+    pointKeys.Sort();
+
+    BoundingRayCount = pointKeys.Count;
+    PassesExecuted   = passes;
+
+    ShadowVertices  = new Vector3[pointKeys.Count * 2];
+    ShadowTriangles = new int[pointKeys.Count * 6];
+
+    int vertexIndex   = 0;
+    int triangleIndex = 0;
+
+    UnneededPasses = MaxPasses - passes;
+
+    for (int i = 0; i < pointKeys.Count; i++) {
+      bool even = i % 2 == 0;
+      int  key  = pointKeys[i];
+
+      ShadowVertices[vertexIndex++] = shadowPoints[key];
+      ShadowVertices[vertexIndex++] = shadowPoints[key] + (transform.TransformDirection(Vector3.back) * shadowLengths[key]);
+
+      if (even) {
+        if (i >= 2) {
+          ShadowTriangles[triangleIndex++] = vertexIndex - 3;
+          ShadowTriangles[triangleIndex++] = vertexIndex - 1;
+          ShadowTriangles[triangleIndex++] = vertexIndex - 2;
+        }
+
+        ShadowTriangles[triangleIndex++] = vertexIndex - 2;
+        ShadowTriangles[triangleIndex++] = vertexIndex - 1;
+        ShadowTriangles[triangleIndex++] = vertexIndex;
+      } else {
+        ShadowTriangles[triangleIndex++] = vertexIndex - 3;
+        ShadowTriangles[triangleIndex++] = vertexIndex - 1;
+        ShadowTriangles[triangleIndex++] = vertexIndex - 2;
+
+        if (i < pointKeys.Count - 1) {
+          ShadowTriangles[triangleIndex++] = vertexIndex - 2;
+          ShadowTriangles[triangleIndex++] = vertexIndex - 1;
+          ShadowTriangles[triangleIndex++] = vertexIndex;
+        } else if (i == pointKeys.Count - 1) {
+          ShadowTriangles[triangleIndex++] = vertexIndex - 2;
+          ShadowTriangles[triangleIndex++] = vertexIndex - 1;
+          ShadowTriangles[triangleIndex++] = 0;
+          ShadowTriangles[triangleIndex++] = vertexIndex - 1;
+          ShadowTriangles[triangleIndex++] = 1;
+          ShadowTriangles[triangleIndex++] = 0;
+        }
+      }
     }
 
-    // if (ShadowVolumeCapture) {
-    //   if (passes <= MaxPasses)
-    //     Debug.Log($"Full shadow volume captured in {passes} passes");
-    //   else
-    //     Debug.LogWarning($"{MaxPasses} passes did not capture full shadow volume");
-    // }
+    if (ShadowVolume == null) {
+      ShadowVolume = GameObject.CreatePrimitive(PrimitiveType.Cube);
+
+      ShadowVolume.name = "Shadow Volume";
+
+      ShadowVolume.GetComponent<BoxCollider>().enabled = false;
+    }
+
+    var shadowMesh = new Mesh {
+      vertices  = (Vector3[]) ShadowVertices.Clone(),
+      triangles = (int[]) ShadowTriangles.Clone()
+    };
+
+    shadowMesh.RecalculateNormals();
+
+    ShadowVolume.GetComponent<MeshFilter>().sharedMesh = shadowMesh;
 
     if (DrawBoundingRays)
-      for(int i = 0; i < shadowPoints.Length; i++)
-        if (shadowPoints[i] != Vector3.zero)
-          Debug.DrawRay(shadowPoints[i], transform.TransformDirection(Vector3.back) * shadowLengths[i], BoundingRayColor);
+      for(int i = 0; i < pointKeys.Count; i++)
+        Debug.DrawRay(shadowPoints[pointKeys[i]], transform.TransformDirection(Vector3.back) * shadowLengths[pointKeys[i]], BoundingRayColor);
   }
 }
