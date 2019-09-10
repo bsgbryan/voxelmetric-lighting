@@ -13,7 +13,7 @@ Shader "Voxelmetric Lighting/Debug" {
 
       #pragma vertex DebugPassVertex
 			#pragma fragment DebugPassFragment
-			
+
 			#include "lib/Debug.hlsl"
 			
 			ENDHLSL
