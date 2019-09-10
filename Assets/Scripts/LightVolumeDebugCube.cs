@@ -24,24 +24,27 @@ public class LightVolumeDebugCube : MonoBehaviour {
     public bool Ignore = true;
 
     [Header("Debug")]
-    public bool DrawInitialRay = true;
-    public Color InitialRayColor = Color.white;
-    public bool DrawHitRays = true;
-    [Range(.5f, 1f)] public float HitAlpha = .75f;
-    public bool DrawMissRays = false;
-    [Range(0f, .5f)] public float MissAlpha = .25f;
-    public bool DrawBoundingRays = true;
-    public Color BoundingRayColor = Color.black;
-    public bool DrawShadowMesh = true;
     public bool DrawPenumbraOutMesh = false;
-    public bool DrawCoreShadowNormals = false;
-    public bool DrawPenumbraOutNormals = false;
-    public bool DrawPenumbraInNormals = false;
-    public Color NormalRayColor = Color.magenta;
+    public bool DrawShadowMesh = true;
     public bool DrawPenumbraInMesh = false;
-    [Range(.25f, 1f)] public float Red = .5f;
-    [Range(.25f, 1f)] public float Green = .5f;
-    [Range(.25f, 1f)] public float Blue = .5f;
+
+    #if UNITY_EDITOR
+      public bool DrawInitialRay = true;
+      public Color InitialRayColor = Color.white;
+      public bool DrawHitRays = true;
+      [Range(.5f, 1f)] public float HitAlpha = .75f;
+      public bool DrawMissRays = false;
+      [Range(0f, .5f)] public float MissAlpha = .25f;
+      public bool DrawBoundingRays = true;
+      public Color BoundingRayColor = Color.black;
+      public bool DrawCoreShadowNormals = false;
+      public bool DrawPenumbraOutNormals = false;
+      public bool DrawPenumbraInNormals = false;
+      public Color NormalRayColor = Color.magenta;
+      [Range(.25f, 1f)] public float Red = .5f;
+      [Range(.25f, 1f)] public float Green = .5f;
+      [Range(.25f, 1f)] public float Blue = .5f;
+    #endif
   #endregion
 
   #region Hidden properties
@@ -54,11 +57,14 @@ public class LightVolumeDebugCube : MonoBehaviour {
     [HideInInspector] public Vector3[] ShadowNormals;
     [HideInInspector] public Vector3[] PenumbraOutNormals;
     [HideInInspector] public Vector3[] PenumbraInNormals;
-    [HideInInspector] public int BoundingRayCount = 0;
-    [HideInInspector] public int Hits = 0;
-    [HideInInspector] public int Misses = 0;
-    [HideInInspector] public int PassesExecuted = 0;
-    [HideInInspector] public int UnneededPasses = 0;
+
+    #if UNITY_EDITOR
+      [HideInInspector] public int BoundingRayCount = 0;
+      [HideInInspector] public int Hits = 0;
+      [HideInInspector] public int Misses = 0;
+      [HideInInspector] public int PassesExecuted = 0;
+      [HideInInspector] public int UnneededPasses = 0;
+    #endif
   #endregion
 
   #region Private properties
@@ -75,7 +81,7 @@ public class LightVolumeDebugCube : MonoBehaviour {
     
     Vector3 center = Vector3.zero;
 
-    int passes = FindShadowBounds(ShadowCaster, ref shadowPoints, ref shadowLengths, out center);
+    int passes = DetermineShadowBounds(ShadowCaster, ref shadowPoints, ref shadowLengths, out center);
 
     BuildShadowMesh(center, shadowPoints, shadowLengths);
 
@@ -83,15 +89,17 @@ public class LightVolumeDebugCube : MonoBehaviour {
     RenderPenumraOut();
     RenderPenumbraIn();
 
-    var pointKeys = shadowPoints.Keys.ToArray();
+    #if UNITY_EDITOR
+      var pointKeys = shadowPoints.Keys.ToArray();
 
-    PassesExecuted   = passes;
-    UnneededPasses   = MaxPasses - passes;
-    BoundingRayCount = pointKeys.Length;
+      PassesExecuted   = passes;
+      UnneededPasses   = MaxPasses - passes;
+      BoundingRayCount = pointKeys.Length;
 
-    if (DrawBoundingRays)
-      for(int i = 0; i < pointKeys.Length; i++)
-        Debug.DrawRay(shadowPoints[pointKeys[i]], transform.TransformDirection(Vector3.back) * shadowLengths[pointKeys[i]], BoundingRayColor);
+      if (DrawBoundingRays)
+        for(int i = 0; i < pointKeys.Length; i++)
+          Debug.DrawRay(shadowPoints[pointKeys[i]], transform.TransformDirection(Vector3.back) * shadowLengths[pointKeys[i]], BoundingRayColor);
+    #endif
   }
 
   private void AssignTriangle_1(ref int triangleIndex, int vertexIndex) {
@@ -158,7 +166,7 @@ public class LightVolumeDebugCube : MonoBehaviour {
     triangleIndex += 3;
   }
 
-  private int FindShadowBounds(GameObject shadowCaster, ref Dictionary<int, Vector3> points, ref Dictionary<int, float> lengths, out Vector3 p) {
+  private int DetermineShadowBounds(GameObject shadowCaster, ref Dictionary<int, Vector3> points, ref Dictionary<int, float> lengths, out Vector3 p) {
     float scale = 1f / (float) Resolution;
 
     LayerMask mask = Ignore ? ~Name.value : Name.value;
@@ -166,8 +174,10 @@ public class LightVolumeDebugCube : MonoBehaviour {
     Vector3 shadowDirection = transform.TransformDirection(Vector3.forward);
     Vector3 drawPoint       = shadowDirection * ShadowLength * RayAugment;
 
-    if (DrawInitialRay)
-      Debug.DrawRay(ShadowCaster.transform.position, drawPoint, InitialRayColor);
+    #if UNITY_EDITOR
+      if (DrawInitialRay)
+        Debug.DrawRay(ShadowCaster.transform.position, drawPoint, InitialRayColor);
+    #endif
 
     var ray = new Ray(ShadowCaster.transform.position, drawPoint);
     
@@ -189,24 +199,26 @@ public class LightVolumeDebugCube : MonoBehaviour {
         
         bool processingPositive = false;
 
-        float r = 0;
-        float g = 0;
-        float b = 0;
+        #if UNITY_EDITOR
+          float r = 0;
+          float g = 0;
+          float b = 0;
 
-        if (processingXAxis) {
-          r = Red;
+          if (processingXAxis) {
+            r = Red;
 
-          processingPositive = side == 0;
-        }
-        
-        if (processingYAxis) {
-          b = Blue;
+            processingPositive = side == 0;
+          }
+          
+          if (processingYAxis) {
+            b = Blue;
 
-          processingPositive = side == 1;
-        }
+            processingPositive = side == 1;
+          }
 
-        if (processingPositive)
-          g = Green;
+          if (processingPositive)
+            g = Green;
+        #endif
         
         for (int step = -passes; step < passes; step++) {
           float x = (float) (processingPositive ? passes : -passes);
@@ -235,15 +247,19 @@ public class LightVolumeDebugCube : MonoBehaviour {
             points[index]  = position;
             lengths[index] = hitInfo.distance;
 
-            if (DrawHitRays)
-              Debug.DrawRay(position, direction * ShadowLength * RayAugment, new Color(r, g, b, HitAlpha));
+            #if UNITY_EDITOR
+              if (DrawHitRays)
+                Debug.DrawRay(position, direction * ShadowLength * RayAugment, new Color(r, g, b, HitAlpha));
 
-            Hits++;
+              Hits++;
+            #endif
           } else {
-            if (DrawMissRays)
-              Debug.DrawRay(position, direction * ShadowLength * RayAugment, new Color(r, g, b, MissAlpha));
+            #if UNITY_EDITOR
+              if (DrawMissRays)
+                Debug.DrawRay(position, direction * ShadowLength * RayAugment, new Color(r, g, b, MissAlpha));
 
-            Misses++;
+              Misses++;
+            #endif
           }
         }
       }
@@ -402,16 +418,16 @@ public class LightVolumeDebugCube : MonoBehaviour {
         triangles = (int[]) ShadowTriangles.Clone()
       };
 
-      shadowMesh.RecalculateNormals();
-
       ShadowVolume.GetComponent<MeshFilter>().sharedMesh = shadowMesh;
     }
-    else
+    else if (ShadowVolume.GetComponent<MeshFilter>().sharedMesh != null)
       ShadowVolume.GetComponent<MeshFilter>().sharedMesh = null;
     
-    if (DrawCoreShadowNormals)
-      for (int i = 0; i < ShadowVertices.Length; i++)
-        Debug.DrawRay(ShadowVertices[i], ShadowNormals[i], NormalRayColor);
+    #if UNITY_EDITOR
+      if (DrawCoreShadowNormals)
+        for (int i = 0; i < ShadowVertices.Length; i++)
+          Debug.DrawRay(ShadowVertices[i], ShadowNormals[i], NormalRayColor);
+    #endif
   }
 
   private void RenderPenumraOut() {
@@ -435,12 +451,14 @@ public class LightVolumeDebugCube : MonoBehaviour {
 
       PenumbraOutVolume.GetComponent<MeshFilter>().sharedMesh = penumbraOutMesh;
     }
-    else
+    else if (PenumbraOutVolume.GetComponent<MeshFilter>().sharedMesh != null)
       PenumbraOutVolume.GetComponent<MeshFilter>().sharedMesh = null;
     
-    if (DrawPenumbraOutNormals)
-      for (int i = 0; i < PenumbraOutNormals.Length; i++)
-        Debug.DrawRay(PenumbraOutVertices[i], PenumbraOutNormals[i], NormalRayColor);
+    #if UNITY_EDITOR
+      if (DrawPenumbraOutNormals)
+        for (int i = 0; i < PenumbraOutNormals.Length; i++)
+          Debug.DrawRay(PenumbraOutVertices[i], PenumbraOutNormals[i], NormalRayColor);
+    #endif
   }
 
   private void RenderPenumbraIn() {
@@ -461,15 +479,15 @@ public class LightVolumeDebugCube : MonoBehaviour {
         triangles = (int[]) PenumbraInTriangles.Clone()
       };
 
-      penumbraInMesh.RecalculateNormals();
-
       PenumbraInVolume.GetComponent<MeshFilter>().sharedMesh = penumbraInMesh;
     }
-    else
+    else if (PenumbraInVolume.GetComponent<MeshFilter>().sharedMesh != null)
       PenumbraInVolume.GetComponent<MeshFilter>().sharedMesh = null;
 
-    if (DrawPenumbraInNormals)
-      for (int i = 0; i < PenumbraInNormals.Length; i++)
-        Debug.DrawRay(PenumbraInVertices[i], PenumbraInNormals[i], NormalRayColor);
+    #if UNITY_EDITOR
+      if (DrawPenumbraInNormals)
+        for (int i = 0; i < PenumbraInNormals.Length; i++)
+          Debug.DrawRay(PenumbraInVertices[i], PenumbraInNormals[i], NormalRayColor);
+    #endif
   }
 }
