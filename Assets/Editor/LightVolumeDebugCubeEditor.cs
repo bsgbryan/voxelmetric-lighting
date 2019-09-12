@@ -17,5 +17,6 @@ public class LightVolumeDebugCubeEditor : Editor {
     EditorGUILayout.LabelField($"Misses: {debugCube.Misses}");
     EditorGUILayout.LabelField($"Passes: {debugCube.PassesExecuted}");
     EditorGUILayout.LabelField($"Unneeded Passes: {debugCube.UnneededPasses}");
+    EditorGUILayout.LabelField($"Shadow Mesh Vertexes: {debugCube.ShadowMeshVertices.Count}");
   }
 }

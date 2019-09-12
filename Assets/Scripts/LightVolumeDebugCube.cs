@@ -57,6 +57,7 @@ public class LightVolumeDebugCube : MonoBehaviour {
     [HideInInspector] public Vector3[] ShadowNormals;
     [HideInInspector] public Vector3[] PenumbraOutNormals;
     [HideInInspector] public Vector3[] PenumbraInNormals;
+    [HideInInspector] public Dictionary<int, Vector3> ShadowMeshVertices;
 
     #if UNITY_EDITOR
       [HideInInspector] public int BoundingRayCount = 0;
@@ -83,7 +84,9 @@ public class LightVolumeDebugCube : MonoBehaviour {
 
     int passes = DetermineShadowBounds(ShadowCaster, ref shadowPoints, ref shadowLengths, out center);
 
-    BuildShadowMesh(center, shadowPoints, shadowLengths);
+    LinkBoundPointsToMeshVertexes(ShadowCaster.GetComponent<MeshFilter>().sharedMesh.vertices, shadowPoints, shadowLengths);
+
+    BuildShadowMesh(center);
 
     RenderCoreShadow();
     RenderPenumraOut();
@@ -98,75 +101,84 @@ public class LightVolumeDebugCube : MonoBehaviour {
 
       if (DrawBoundingRays)
         for(int i = 0; i < pointKeys.Length; i++)
-          Debug.DrawRay(shadowPoints[pointKeys[i]], transform.TransformDirection(Vector3.back) * shadowLengths[pointKeys[i]], BoundingRayColor);
+          Debug.DrawRay(
+            shadowPoints[pointKeys[i]],
+            transform.TransformDirection(Vector3.back) * shadowLengths[pointKeys[i]],
+            BoundingRayColor
+          );
     #endif
   }
 
   private void AssignTriangle_1(ref int triangleIndex, int vertexIndex) {
-    ShadowTriangles[triangleIndex]     = vertexIndex - 3;
-    ShadowTriangles[triangleIndex + 1] = vertexIndex - 1;
-    ShadowTriangles[triangleIndex + 2] = vertexIndex - 2;
+    ShadowTriangles[triangleIndex]     = vertexIndex;
+    ShadowTriangles[triangleIndex + 1] = vertexIndex + 1;
+    ShadowTriangles[triangleIndex + 2] = vertexIndex + 2;
 
-    PenumbraOutTriangles[triangleIndex]     = vertexIndex - 3;
-    PenumbraOutTriangles[triangleIndex + 1] = vertexIndex - 1;
-    PenumbraOutTriangles[triangleIndex + 2] = vertexIndex - 2;
+    PenumbraOutTriangles[triangleIndex]     = vertexIndex;
+    PenumbraOutTriangles[triangleIndex + 1] = vertexIndex + 1;
+    PenumbraOutTriangles[triangleIndex + 2] = vertexIndex + 2;
 
-    PenumbraInTriangles[triangleIndex]     = vertexIndex - 3;
-    PenumbraInTriangles[triangleIndex + 1] = vertexIndex - 1;
-    PenumbraInTriangles[triangleIndex + 2] = vertexIndex - 2;
+    PenumbraInTriangles[triangleIndex]     = vertexIndex;
+    PenumbraInTriangles[triangleIndex + 1] = vertexIndex + 1;
+    PenumbraInTriangles[triangleIndex + 2] = vertexIndex + 2;
 
     triangleIndex += 3;
   }
 
   private void AssignTriangle_2(ref int triangleIndex, int vertexIndex) {
-    ShadowTriangles[triangleIndex]     = vertexIndex - 2;
-    ShadowTriangles[triangleIndex + 1] = vertexIndex - 1;
-    ShadowTriangles[triangleIndex + 2] = vertexIndex;
+    ShadowTriangles[triangleIndex]     = vertexIndex + 1;
+    ShadowTriangles[triangleIndex + 1] = vertexIndex + 3;
+    ShadowTriangles[triangleIndex + 2] = vertexIndex + 2;
 
-    PenumbraOutTriangles[triangleIndex]     = vertexIndex - 2;
-    PenumbraOutTriangles[triangleIndex + 1] = vertexIndex - 1;
-    PenumbraOutTriangles[triangleIndex + 2] = vertexIndex;
+    PenumbraOutTriangles[triangleIndex]     = vertexIndex + 1;
+    PenumbraOutTriangles[triangleIndex + 1] = vertexIndex + 3;
+    PenumbraOutTriangles[triangleIndex + 2] = vertexIndex + 2;
 
-    PenumbraInTriangles[triangleIndex]     = vertexIndex - 2;
-    PenumbraInTriangles[triangleIndex + 1] = vertexIndex - 1;
-    PenumbraInTriangles[triangleIndex + 2] = vertexIndex;
+    PenumbraInTriangles[triangleIndex]     = vertexIndex + 1;
+    PenumbraInTriangles[triangleIndex + 1] = vertexIndex + 3;
+    PenumbraInTriangles[triangleIndex + 2] = vertexIndex + 2;
 
     triangleIndex += 3;
   }
 
   private void AssignTriangle_3(ref int triangleIndex, int vertexIndex) {
-    ShadowTriangles[triangleIndex]     = vertexIndex - 2;
-    ShadowTriangles[triangleIndex + 1] = vertexIndex - 1;
+    ShadowTriangles[triangleIndex]     = vertexIndex;
+    ShadowTriangles[triangleIndex + 1] = vertexIndex + 1;
     ShadowTriangles[triangleIndex + 2] = 0;
 
-    PenumbraOutTriangles[triangleIndex]     = vertexIndex - 2;
-    PenumbraOutTriangles[triangleIndex + 1] = vertexIndex - 1;
+    PenumbraOutTriangles[triangleIndex]     = vertexIndex;
+    PenumbraOutTriangles[triangleIndex + 1] = vertexIndex + 1;
     PenumbraOutTriangles[triangleIndex + 2] = 0;
 
-    PenumbraInTriangles[triangleIndex]     = vertexIndex - 2;
-    PenumbraInTriangles[triangleIndex + 1] = vertexIndex - 1;
+    PenumbraInTriangles[triangleIndex]     = vertexIndex;
+    PenumbraInTriangles[triangleIndex + 1] = vertexIndex + 1;
     PenumbraInTriangles[triangleIndex + 2] = 0;
 
     triangleIndex += 3;
   }
 
   private void AssignTriangle_4(ref int triangleIndex, int vertexIndex) {
-    ShadowTriangles[triangleIndex]     = vertexIndex - 1;
+    ShadowTriangles[triangleIndex]     = vertexIndex + 1;
     ShadowTriangles[triangleIndex + 1] = 1;
     ShadowTriangles[triangleIndex + 2] = 0;
 
-    PenumbraOutTriangles[triangleIndex]     = vertexIndex - 1;
+    PenumbraOutTriangles[triangleIndex]     = vertexIndex + 1;
     PenumbraOutTriangles[triangleIndex + 1] = 1;
     PenumbraOutTriangles[triangleIndex + 2] = 0;
 
-    PenumbraInTriangles[triangleIndex]     = vertexIndex - 1;
+    PenumbraInTriangles[triangleIndex]     = vertexIndex + 1;
     PenumbraInTriangles[triangleIndex + 1] = 1;
     PenumbraInTriangles[triangleIndex + 2] = 0;
 
     triangleIndex += 3;
   }
 
-  private int DetermineShadowBounds(GameObject shadowCaster, ref Dictionary<int, Vector3> points, ref Dictionary<int, float> lengths, out Vector3 p) {
+  private int DetermineShadowBounds(
+    GameObject shadowCaster,
+    ref Dictionary<int, Vector3> points,
+    ref Dictionary<int, float> lengths,
+    out Vector3 p
+  ) {
     float scale = 1f / (float) Resolution;
 
     LayerMask mask = Ignore ? ~Name.value : Name.value;
@@ -186,9 +198,11 @@ public class LightVolumeDebugCube : MonoBehaviour {
     bool hasShadow = true;
     int  passes    = 0;
 
-    Hits           = 0;
-    Misses         = 0;
-    PassesExecuted = 0;
+    #if UNITY_EDITOR
+      Hits           = 0;
+      Misses         = 0;
+      PassesExecuted = 0;
+    #endif
     
     while (hasShadow && passes++ < MaxPasses) {
       hasShadow = false;
@@ -209,7 +223,7 @@ public class LightVolumeDebugCube : MonoBehaviour {
 
             processingPositive = side == 0;
           }
-          
+
           if (processingYAxis) {
             b = Blue;
 
@@ -268,13 +282,11 @@ public class LightVolumeDebugCube : MonoBehaviour {
     return passes - 1;
   }
 
-  private void BuildShadowMesh(Vector3 center, Dictionary<int, Vector3> points, Dictionary<int, float> lengths) {
-    var pointKeys = points.Keys.ToList();
-
-    pointKeys.Sort();
-
-    int p = pointKeys.Count * 2;
-    int t = pointKeys.Count * 6;
+  private void BuildShadowMesh(Vector3 center) {
+    var keys = ShadowMeshVertices.Keys.ToList();
+    
+    int p = keys.Count;
+    int t = p * 3;
     
     ShadowVertices      = new Vector3[p];
     PenumbraOutVertices = new Vector3[p];
@@ -288,115 +300,51 @@ public class LightVolumeDebugCube : MonoBehaviour {
     PenumbraOutTriangles = new int[t];
     PenumbraInTriangles  = new int[t];
 
-    int vertexIndex   = 0;
     int triangleIndex = 0;
 
-    for (int i = 0; i < pointKeys.Count; i++) {
-      bool even = i % 2 == 0;
-      int  key  = pointKeys[i];
+    keys.Sort();
 
-      Vector3 point  = points[key];
-      float   length = lengths[key];
-
-      #region Smoothing logic
-        if (Smooth == true) {
-          int prevPrevKey = 0;
-          int previousKey = 0;
-          int nextKey     = 0;
-          int nextNextKey = 0;
-
-          if (i == 0) {
-            prevPrevKey = pointKeys[pointKeys.Count - 2];
-            previousKey = pointKeys.Last();
-            nextKey     = pointKeys[1];
-            nextNextKey = pointKeys[2];
-          } else if (i == 1) {
-            prevPrevKey = pointKeys.Last();
-            previousKey = pointKeys.First();
-            nextKey     = pointKeys[2];
-            nextNextKey = pointKeys[3];
-          } else if (i == pointKeys.Count - 1) {
-            prevPrevKey = pointKeys[i - 2];
-            previousKey = pointKeys[i - 1];
-            nextKey     = pointKeys.First();
-            nextNextKey = pointKeys[1];
-          } else if (i == pointKeys.Count - 2) {
-            prevPrevKey = pointKeys[pointKeys.Count - 3];
-            previousKey = pointKeys[pointKeys.Count - 2];
-            nextKey     = pointKeys.Last();
-            nextNextKey = pointKeys.First();
-          } else {
-            prevPrevKey = pointKeys[i - 2];
-            previousKey = pointKeys[i - 1];
-            nextKey     = pointKeys[i + 1];
-            nextNextKey = pointKeys[i + 2];
-          }
-
-          Vector3 prevPrev = points[prevPrevKey];
-          Vector3 previous = points[previousKey];
-          Vector3 next     = points[nextKey];
-          Vector3 nextNext = points[nextNextKey];
-          Vector3 averaged = (prevPrev + previous + points[key] + next + nextNext) / 5;
-
-          float prevPrevLength = lengths[prevPrevKey];
-          float previousLength = lengths[previousKey];
-          float nextLength     = lengths[nextKey];
-          float nextNextLength = lengths[nextNextKey];
-          float averagedLength = (prevPrevLength + previousLength + lengths[key] + nextLength + nextNextLength) / 5f;
-
-          point  = averaged;
-          length = averagedLength;
-        }
-      #endregion
+    for (int i = 0; i < keys.Count; i += 2) {
+      Vector3 point = ShadowMeshVertices[keys[i]];
       
       #region Vertex assignment
-        int nextVertexIndex = vertexIndex + 1;
+        int nextI = i + 1;
 
-        Vector3 back = point + (transform.TransformDirection(Vector3.back) * length);
+        Vector3 back = ShadowMeshVertices[keys[i + 1]];
 
-        ShadowVertices[vertexIndex]     = point;
-        ShadowVertices[nextVertexIndex] = back;
+        ShadowVertices[i]     = point;
+        ShadowVertices[nextI] = back;
 
-        ShadowNormals[vertexIndex]     = point;
-        ShadowNormals[nextVertexIndex] = point;
+        ShadowNormals[i]     = point;
+        ShadowNormals[nextI] = point;
 
         Vector3 distanceToCenter = point - center;
         Vector3 penumbraOut      = point + distanceToCenter * PenumbraOutMagnitude;
 
-        PenumbraOutVertices[vertexIndex]     = penumbraOut;
-        PenumbraOutVertices[nextVertexIndex] = back;
+        PenumbraOutVertices[i]     = penumbraOut;
+        PenumbraOutVertices[nextI] = back;
 
-        PenumbraOutNormals[vertexIndex]     = penumbraOut;
-        PenumbraOutNormals[nextVertexIndex] = penumbraOut;
+        PenumbraOutNormals[i]     = penumbraOut;
+        PenumbraOutNormals[nextI] = penumbraOut;
 
         Vector3 penumbraIn = point - distanceToCenter * PenumbraInMagnitude;
         
-        PenumbraInVertices[vertexIndex]     = penumbraIn;
-        PenumbraInVertices[nextVertexIndex] = back;
+        PenumbraInVertices[i]     = penumbraIn;
+        PenumbraInVertices[nextI] = back;
 
-        PenumbraInNormals[vertexIndex]     = penumbraIn;
-        PenumbraInNormals[nextVertexIndex] = penumbraIn;
-
-        vertexIndex += 2;
+        PenumbraInNormals[i]     = penumbraIn;
+        PenumbraInNormals[nextI] = penumbraIn;
       #endregion
 
-      #region Assign vertexes to triangle indexes
-        if (even) {  
-          if (i >= 2)
-            AssignTriangle_1(ref triangleIndex, vertexIndex);
-
-          AssignTriangle_2(ref triangleIndex, vertexIndex);
-        } else {
-          AssignTriangle_1(ref triangleIndex, vertexIndex);
-
-          if (i < pointKeys.Count - 1)
-            AssignTriangle_2(ref triangleIndex, vertexIndex);
-          else if (i == pointKeys.Count - 1) {
-            AssignTriangle_3(ref triangleIndex, vertexIndex);
-            AssignTriangle_4(ref triangleIndex, vertexIndex);
-          }
-        }
-      #endregion
+      
+      if (i < keys.Count - 2) {
+        AssignTriangle_1(ref triangleIndex, i);
+        AssignTriangle_2(ref triangleIndex, i);
+      }
+      else {
+        AssignTriangle_3(ref triangleIndex, i);
+        AssignTriangle_4(ref triangleIndex, i);
+      }
     }
   }
 
@@ -414,7 +362,7 @@ public class LightVolumeDebugCube : MonoBehaviour {
 
     if (DrawShadowMesh) {
       var shadowMesh = new Mesh {
-        vertices  = (Vector3[]) ShadowVertices.Clone(),
+        vertices  = ShadowVertices.ToArray(),
         triangles = (int[]) ShadowTriangles.Clone()
       };
 
@@ -489,5 +437,49 @@ public class LightVolumeDebugCube : MonoBehaviour {
         for (int i = 0; i < PenumbraInNormals.Length; i++)
           Debug.DrawRay(PenumbraInVertices[i], PenumbraInNormals[i], NormalRayColor);
     #endif
+  }
+
+  private void LinkBoundPointsToMeshVertexes(
+    Vector3[] vertexes,
+    Dictionary<int, Vector3> points,
+    Dictionary<int, float> lengths
+  ) {
+    var pointKeys = points.Keys.ToList();
+
+    pointKeys.Sort();
+    
+    ShadowMeshVertices = new Dictionary<int, Vector3>();
+    
+    for (int s = 0, index = 0; s < pointKeys.Count; s++, index += 2) {
+      float shortestDistance = float.PositiveInfinity;
+
+      int     p     = pointKeys[s];
+      Vector3 point = points[p];
+      Vector3 back  = point + (transform.TransformDirection(Vector3.back) * lengths[p]);
+
+      Vector3 front = Vector3.zero;
+      Vector3 rear  = Vector3.zero;
+
+      for (int v = 0; v < vertexes.Length; v++) {
+        Matrix4x4 matrix = Matrix4x4.TRS(
+          ShadowCaster.transform.position,
+          ShadowCaster.transform.rotation,
+          ShadowCaster.transform.localScale
+        );
+        
+        Vector3 vertex   = matrix.MultiplyPoint(vertexes[v]);
+        float   distance = Vector3.Distance(vertex, back);
+
+        if (distance < shortestDistance) {
+          front = point;
+          rear  = vertex;
+          
+          shortestDistance = distance;
+        }
+      }
+      
+      ShadowMeshVertices[index]     = front;
+      ShadowMeshVertices[index + 1] = rear;
+    }
   }
 }
